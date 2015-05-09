@@ -1,0 +1,28 @@
+{
+  "name": "cucumber-sweetener",
+  "version": "0.1.0",
+  "description": "A small extension for cucumber-js that sweetens your steps with promises and timeouts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zs-zs/cucumber-sweetener.git"
+  },
+  "keywords": [
+    "cucumber-js",
+    "callback",
+    "timeout",
+    "promise"
+  ],
+  "author": "zs-zs <zsolt.zsigmondi@hotmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zs-zs/cucumber-sweetener/issues"
+  },
+  "homepage": "https://github.com/zs-zs/cucumber-sweetener#readme",
+  "dependencies": {
+    "bunyan": "^1.3.5"
+  }
+}
