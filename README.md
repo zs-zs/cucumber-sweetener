@@ -36,7 +36,7 @@ With sweet steps, you can specify a timeout for the step execution time if you w
 ```javascript
 Then(/^the user '([^']*)' and the user '([^']*)' should be connected$/, function(id1, id2) {
   ...
-}, {timeout: 5000}); // No more hanging tests! After 5 seconds this scenario would fail.
+}, {timeout: 5000}); // No more hanging tests! After 5 seconds this step would fail.
 ```
 
 ## Installation
