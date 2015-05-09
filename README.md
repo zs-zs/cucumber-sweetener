@@ -7,7 +7,8 @@ A small extension for [cucumber-js](https://github.com/cucumber/cucumber-js) tha
 Without cucumber-sweetener, you have to handle callbacks manually, even if you use an API which returns promises:
 
 ```javascript
-this.Then(/^the user '([^']*)' and the user '([^']*)' should be connected$/, function(id1, id2, callback) {
+this.Then(/^the user '([^']*)' and the user '([^']*)' should be connected$/, 
+function(id1, id2, callback) {
 	var user1 = this.getUser(id1).waitForConnection();
 	var user2 = this.getUser(id2).waitForConnection();
 	q.all([user1, user2]).then(function() {
@@ -35,7 +36,7 @@ With sweet steps, you can specify a timeout for the step execution time if you w
 ```javascript
 Then(/^the user '([^']*)' and the user '([^']*)' should be connected$/, function(id1, id2) {
   ...
-}, {timeout: 5000}); // 5 sec timeout -> after 5 seconds the scenario will fail. No more hanging tests!
+}, {timeout: 5000}); // No more hanging tests! After 5 seconds this scenario would fail.
 ```
 
 ## Installation
@@ -53,7 +54,7 @@ For example if you have a support file containing your event hooks, you can inse
 var sweetener = require('cucumber-sweetener');
 
 var eventHooks = function () {
-  sweetener.sweeten(this, {timeout: 1000});	// global timeout for steps where are no timeout specified
+  sweetener.sweeten(this, {timeout: 1000});// global timeout for steps where are no timeout
   
   // after you called .sweeten(), you can use the supported sweetened steps
   After(function() {
