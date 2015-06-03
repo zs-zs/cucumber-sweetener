@@ -94,7 +94,15 @@ function wrapScenarioStep(defineStep, globalOptions) {
 	globalOptions.timeout = typeof globalOptions.timeout === 'number' ? globalOptions.timeout : defaultGlobalTimeout;
 
 	return function(pattern, body, timeoutOpts) {
-		return defineStep(pattern, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
+		if(!Array.isArray(pattern)) {
+			defineStep(pattern, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
+			return;
+		}
+
+		//array of patterns:
+		pattern.forEach(function(p) {
+			defineStep(pattern, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
+		});
 	};
 }
 

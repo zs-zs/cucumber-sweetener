@@ -1,6 +1,6 @@
 {
   "name": "cucumber-sweetener",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A small extension for cucumber-js that sweetens your steps with promises and timeouts",
   "main": "index.js",
   "scripts": {
