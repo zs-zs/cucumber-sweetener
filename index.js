@@ -1,3 +1,5 @@
+'use strict';
+
 var bunyan = require('bunyan');
 
 var log = bunyan.createLogger({
@@ -11,28 +13,10 @@ var defaultGlobalTimeout = 1000;
 
 function getTimeoutOpts(stepTimeoutOpts, defaultTimeout) {
 	var t = stepTimeoutOpts || {timeout: defaultTimeout};
-	if(typeof t.timeout != 'number') {
+	if(typeof t.timeout !== 'number') {
 		throw new Error('The step timeout must be a number, ' + t.timeout + ' is not a number!');
 	}
 	return t;
-}
-
-function wrapScenarioStep(defineStep, globalOptions) {
-	globalOptions = globalOptions || {};
-	globalOptions.timeout = typeof globalOptions.timeout === 'number' ? globalOptions.timeout : defaultGlobalTimeout;
-
-	return function(pattern, body, timeoutOpts) {
-		return defineStep(pattern, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
-	};
-}
-
-function wrapHook(defineStep, globalOptions) {
-	globalOptions = globalOptions || {};
-	globalOptions.timeout = typeof globalOptions.timeout === 'number' ? globalOptions.timeout : defaultGlobalTimeout;
-
-	return function(body, timeoutOpts) {
-		return defineStep(wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
-	};
 }
 
 function ensureTimeoutCleared(timeoutId) {
@@ -42,7 +26,7 @@ function ensureTimeoutCleared(timeoutId) {
 }
 
 function createTimeoutCallback(callback, timeoutOpts) {
-	var timeoutId = undefined,
+	var timeoutId,
 		isCallbackCalled = false;
 
 	var ensureCallbackCalled = function(f, self, args) {
@@ -80,7 +64,7 @@ function wrapWithTimeout(body, timeoutOpts) {
 		var wrappedCallback = createTimeoutCallback(args[args.length - 1], timeoutOpts);
 		args[args.length - 1] = wrappedCallback;
 
-		var retval = undefined;
+		var retval;
 
 		try {
 			log.info(stepName + ' started (Feature: "' + featureName + '", Scenario: "' + scenarioName + '")');
@@ -88,20 +72,38 @@ function wrapWithTimeout(body, timeoutOpts) {
 			log.info(stepName + ' ended (Feature: "' + featureName + '", Scenario: "' + scenarioName + '")');
 		} catch (err) {
 			wrappedCallback.fail(err);
-			return;
+			return undefined;
 		}
 		if (args.length === body.length) {
 			return retval;
 		}
 		if (retval && retval.then) {
-			retval.then((function() {
+			retval.then(function() {
 				return wrappedCallback();
-			}), (function(err) {
+			}, function(err) {
 				return wrappedCallback.fail(err);
-			}));
-			return;
+			});
+			return undefined;
 		}
 		return wrappedCallback();
+	};
+}
+
+function wrapScenarioStep(defineStep, globalOptions) {
+	globalOptions = globalOptions || {};
+	globalOptions.timeout = typeof globalOptions.timeout === 'number' ? globalOptions.timeout : defaultGlobalTimeout;
+
+	return function(pattern, body, timeoutOpts) {
+		return defineStep(pattern, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
+	};
+}
+
+function wrapHook(defineStep, globalOptions) {
+	globalOptions = globalOptions || {};
+	globalOptions.timeout = typeof globalOptions.timeout === 'number' ? globalOptions.timeout : defaultGlobalTimeout;
+
+	return function(body, timeoutOpts) {
+		return defineStep(wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
 	};
 }
 
