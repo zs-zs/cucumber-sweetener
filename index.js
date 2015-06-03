@@ -102,8 +102,15 @@ function wrapHook(defineStep, globalOptions) {
 	globalOptions = globalOptions || {};
 	globalOptions.timeout = typeof globalOptions.timeout === 'number' ? globalOptions.timeout : defaultGlobalTimeout;
 
-	return function(body, timeoutOpts) {
-		return defineStep(wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
+	return function() {
+		var timeoutOpts = Array.prototype.pop.call(arguments);
+		var body = Array.prototype.pop.call(arguments);
+
+		var wrappedFunction = wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout));
+		var newParams = Array.prototype.slice.call(arguments);
+		newParams.push(wrappedFunction);
+
+		return defineStep.apply(this, newParams);
 	};
 }
 
