@@ -101,7 +101,7 @@ function wrapScenarioStep(defineStep, globalOptions) {
 
 		//array of patterns:
 		pattern.forEach(function(p) {
-			defineStep(pattern, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
+			defineStep(p, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
 		});
 	};
 }
