@@ -123,6 +123,10 @@ function wrapHook(defineStep, globalOptions) {
 }
 
 module.exports.sweeten = function (context, opts) {
+	if(opts.logger) {
+		log = opts.logger;
+	}
+
 	global.Given = global.When = global.Then = wrapScenarioStep(context.defineStep, opts);
 	global.After = wrapHook(context.After, opts);
 	global.Before = wrapHook(context.Before, opts);
