@@ -67,9 +67,9 @@ function wrapWithTimeout(body, timeoutOpts) {
 		var retval;
 
 		try {
-			log.info(stepName + ' started (Feature: "' + featureName + '", Scenario: "' + scenarioName + '")');
+			log.info('STEP: ' + stepName + ' started');
 			retval = body.apply(this, args);
-			log.info(stepName + ' ended (Feature: "' + featureName + '", Scenario: "' + scenarioName + '")');
+			log.info('STEP: ' + stepName + ' ended');
 		} catch (err) {
 			wrappedCallback.fail(err);
 			return undefined;
@@ -133,11 +133,13 @@ module.exports.sweeten = function (context, opts) {
 
 	context.BeforeFeature(function (event, callback) {
 		featureName = event.getPayloadItem('feature').getName();
+		log.info('FEATURE: ' + featureName + ' started');
 		callback();
 	});
 
 	context.BeforeScenario(function (event, callback) {
 		scenarioName = event.getPayloadItem('scenario').getName();
+		log.info('SCENARIO: ' + scenarioName + ' started');
 		callback();
 	});
 
