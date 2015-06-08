@@ -134,17 +134,24 @@ module.exports.sweeten = function (context, opts) {
 	context.BeforeFeature(function (event, callback) {
 		featureName = event.getPayloadItem('feature').getName();
 		log.info('FEATURE: ' + featureName + ' started');
+		stepName = 'BEFORE FEATURE'; // for proper logging in the wrapped step
 		callback();
 	});
 
 	context.BeforeScenario(function (event, callback) {
 		scenarioName = event.getPayloadItem('scenario').getName();
 		log.info('SCENARIO: ' + scenarioName + ' started');
+		stepName = 'BEFORE SCENARIO'; // for proper logging in the wrapped step
 		callback();
 	});
 
 	context.BeforeStep(function (event, callback) {
 		stepName = event.getPayloadItem('step').getName();
+		callback();
+	});
+
+	context.After(function(event, callback) {
+		stepName = 'AFTER SCENARIO'; // for proper logging in the wrapped step
 		callback();
 	});
 };
