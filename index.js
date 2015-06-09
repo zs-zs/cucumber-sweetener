@@ -8,7 +8,7 @@ var log = bunyan.createLogger({
 	streams: [{path: 'sweetener.log'}]
 });
 
-var featureName, scenarioName, stepName;
+var stepName;
 var defaultGlobalTimeout = 1000;
 
 function getTimeoutOpts(stepTimeoutOpts, defaultTimeout) {
@@ -58,7 +58,7 @@ function createTimeoutCallback(callback, timeoutOpts) {
 	return wrappedCallback;
 }
 
-function wrapWithTimeout(body, timeoutOpts) {
+function wrapWithTimeout(body, timeoutOpts, getStepName) {
 	return function() {
 		var args = Array.prototype.slice.call(arguments);
 		var wrappedCallback = createTimeoutCallback(args[args.length - 1], timeoutOpts);
@@ -67,9 +67,9 @@ function wrapWithTimeout(body, timeoutOpts) {
 		var retval;
 
 		try {
-			log.info('STEP: ' + stepName + ' started');
+			log.info(getStepName() + ' started');
 			retval = body.apply(this, args);
-			log.info('STEP: ' + stepName + ' ended');
+			log.info(getStepName() + ' ended');
 		} catch (err) {
 			wrappedCallback.fail(err);
 			return undefined;
@@ -89,24 +89,26 @@ function wrapWithTimeout(body, timeoutOpts) {
 	};
 }
 
-function wrapScenarioStep(defineStep, globalOptions) {
+function wrapScenarioStep(defineStep, globalOptions, getStepName) {
 	globalOptions = globalOptions || {};
 	globalOptions.timeout = typeof globalOptions.timeout === 'number' ? globalOptions.timeout : defaultGlobalTimeout;
 
 	return function(pattern, body, timeoutOpts) {
+		var wrappedFunction = wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout), getStepName);
+
 		if(!Array.isArray(pattern)) {
-			defineStep(pattern, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
+			defineStep(pattern, wrappedFunction);
 			return;
 		}
 
 		//array of patterns:
 		pattern.forEach(function(p) {
-			defineStep(p, wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout)));
+			defineStep(p, wrappedFunction);
 		});
 	};
 }
 
-function wrapHook(defineStep, globalOptions) {
+function wrapHook(defineStep, globalOptions, getStepName) {
 	globalOptions = globalOptions || {};
 	globalOptions.timeout = typeof globalOptions.timeout === 'number' ? globalOptions.timeout : defaultGlobalTimeout;
 
@@ -114,11 +116,23 @@ function wrapHook(defineStep, globalOptions) {
 		var timeoutOpts = Array.prototype.pop.call(arguments);
 		var body = Array.prototype.pop.call(arguments);
 
-		var wrappedFunction = wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout));
+		var wrappedFunction = wrapWithTimeout(body, getTimeoutOpts(timeoutOpts, globalOptions.timeout), getStepName);
 		var newParams = Array.prototype.slice.call(arguments);
 		newParams.push(wrappedFunction);
 
 		return defineStep.apply(this, newParams);
+	};
+}
+
+function stepNameProvider(prefix) {
+	return function() {
+		return prefix + ' ' + stepName;
+	};
+}
+
+function hookNameProvider(hookName) {
+	return function() {
+		return hookName;
 	};
 }
 
@@ -127,31 +141,27 @@ module.exports.sweeten = function (context, opts) {
 		log = opts.logger;
 	}
 
-	global.Given = global.When = global.Then = wrapScenarioStep(context.defineStep, opts);
-	global.After = wrapHook(context.After, opts);
-	global.Before = wrapHook(context.Before, opts);
+	global.Given = wrapScenarioStep(context.defineStep, opts, stepNameProvider('GIVEN'));
+	global.When = wrapScenarioStep(context.defineStep, opts, stepNameProvider('WHEN'));
+	global.Then = wrapScenarioStep(context.defineStep, opts, stepNameProvider('THEN'));
+
+	global.After = wrapHook(context.After, opts, hookNameProvider('AFTER HOOK'));
+	global.Before = wrapHook(context.Before, opts, hookNameProvider('BEFORE HOOK'));
 
 	context.BeforeFeature(function (event, callback) {
-		featureName = event.getPayloadItem('feature').getName();
+		var featureName = event.getPayloadItem('feature').getName();
 		log.info('FEATURE: ' + featureName + ' started');
-		stepName = 'BEFORE FEATURE'; // for proper logging in the wrapped step
 		callback();
 	});
 
 	context.BeforeScenario(function (event, callback) {
-		scenarioName = event.getPayloadItem('scenario').getName();
+		var scenarioName = event.getPayloadItem('scenario').getName();
 		log.info('SCENARIO: ' + scenarioName + ' started');
-		stepName = 'BEFORE SCENARIO'; // for proper logging in the wrapped step
 		callback();
 	});
 
 	context.BeforeStep(function (event, callback) {
 		stepName = event.getPayloadItem('step').getName();
-		callback();
-	});
-
-	context.After(function(event, callback) {
-		stepName = 'AFTER SCENARIO'; // for proper logging in the wrapped step
 		callback();
 	});
 };
